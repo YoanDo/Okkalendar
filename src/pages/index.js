@@ -1,5 +1,5 @@
 import { ThemeProvider } from 'styled-components';
-import dynamic from 'next/dynamic'; // Import next/dynamic
+import dynamic from 'next/dynamic';
 import theme from '@/assets/theme';
 
 // Dynamically import the Calendar component with CSR
@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <ThemeProvider theme={theme}>
       <main>
-        <DynamicCalendar /> {/* Render the Calendar component */}
+        <DynamicCalendar />
       </main>
     </ThemeProvider>
   );

@@ -1,3 +1,8 @@
+// Todo
+// - modification event
+// - check des 25m
+// - alerts /toast (success & echec)
+
 import React, { useRef, useEffect } from 'react';
 import {
   DayPilot,
@@ -59,7 +64,6 @@ const Calendar = ({
 
     // If there are overlapping events, adjust the new event's start and end times
     if (overlappingEvents.length > 0) {
-      // todo replace by toastify
       alert('Event should not overlap');
       return;
     }

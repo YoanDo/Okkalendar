@@ -35,6 +35,12 @@ export default function handler(req, res) {
     newEvent.id = events.length + 1;
     events.push(newEvent);
     res.status(201).json(newEvent);
+  } else if (req.method === 'PUT') {
+    // Handle PUT request to update an event
+    const { id, text, start, end } = req.body;
+    const updatedEvent = { id, text, start, end };
+    events = events.map((event) => (event.id === id ? updatedEvent : event));
+    res.status(200).json({ message: 'Event updated successfully' });
   } else if (req.method === 'DELETE') {
     // Handle DELETE request to remove an event
     const { id } = req.body;
