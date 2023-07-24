@@ -4,7 +4,7 @@ import {
   DayPilotCalendar,
   DayPilotNavigator,
 } from '@daypilot/daypilot-lite-react';
-import { arrayOf, number, oneOfType, shape, string } from 'prop-types';
+import { arrayOf, func, number, oneOfType, shape, string } from 'prop-types';
 import {
   CalendarNavigationPanel,
   CalendarTitle,
@@ -14,7 +14,11 @@ import {
 import getFormattedDate from '@/helpers/getTodayFormatedDate';
 import formatDate from '@/helpers/formatDate';
 
-const Calendar = ({ events }) => {
+const Calendar = ({
+  events = [],
+  onAddEvent = () => {},
+  onDeleteEvent = () => {},
+}) => {
   const todayDate = getFormattedDate();
   const calendarRef = useRef();
 
@@ -60,7 +64,8 @@ const Calendar = ({ events }) => {
       return;
     }
 
-    dp.events.add(newEvent);
+    // dp.events.add(newEvent);
+    onAddEvent(newEvent);
   };
 
   return (
@@ -86,6 +91,10 @@ const Calendar = ({ events }) => {
           eventDeleteHandling="Update"
           events={events}
           onTimeRangeSelected={handleTimeRangeSelected}
+          onEventDeleted={({ e }) => {
+            const deletedEventId = e.data.id;
+            onDeleteEvent(deletedEventId);
+          }}
           ref={calendarRef}
           timeRangeSelectedHandling="Enabled"
           viewType="Week"
@@ -104,6 +113,8 @@ Calendar.propTypes = {
       end: string.isRequired,
     })
   ),
+  onAddEvent: func.isRequired,
+  onDeleteEvent: func.isRequired,
 };
 
 export default Calendar;
