@@ -1,27 +1,27 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   DayPilot,
   DayPilotCalendar,
   DayPilotNavigator,
 } from '@daypilot/daypilot-lite-react';
+import { arrayOf, number, oneOfType, shape, string } from 'prop-types';
 import {
   CalendarNavigationPanel,
   CalendarTitle,
   CalendarWrapper,
   WeekCalendarWrapper,
 } from './styles';
-import { fakeEvents } from './fixtures';
 import getFormattedDate from '@/helpers/getTodayFormatedDate';
 import formatDate from '@/helpers/formatDate';
 
-const Calendar = () => {
+const Calendar = ({ events }) => {
   const todayDate = getFormattedDate();
   const calendarRef = useRef();
 
   useEffect(() => {
     const startDate = todayDate;
     const dp = calendarRef.current.control;
-    dp.update({ startDate, events: fakeEvents });
+    dp.update({ startDate, events });
     // * premium functions to keep in mind
     // dp.weekStarts = 6;
     // dp.allowEventOverlap = false;
@@ -48,14 +48,15 @@ const Calendar = () => {
     };
 
     // Check for overlapping events
-    const events = dp.events.list;
-    const overlappingEvents = events.filter(
+    const existingEvents = dp.events.list;
+    const overlappingEvents = existingEvents.filter(
       (event) => event.start < newEvent.end && event.end > newEvent.start
     );
 
     // If there are overlapping events, adjust the new event's start and end times
     if (overlappingEvents.length > 0) {
-      console.log('overlapping');
+      // todo replace by toastify
+      alert('Event should not overlap');
       return;
     }
 
@@ -83,7 +84,7 @@ const Calendar = () => {
         <DayPilotCalendar
           durationBarVisible={false}
           eventDeleteHandling="Update"
-          events={fakeEvents}
+          events={events}
           onTimeRangeSelected={handleTimeRangeSelected}
           ref={calendarRef}
           timeRangeSelectedHandling="Enabled"
@@ -92,6 +93,17 @@ const Calendar = () => {
       </WeekCalendarWrapper>
     </CalendarWrapper>
   );
+};
+
+Calendar.propTypes = {
+  events: arrayOf(
+    shape({
+      id: oneOfType([string, number]).isRequired,
+      text: string.isRequired,
+      start: string.isRequired,
+      end: string.isRequired,
+    })
+  ),
 };
 
 export default Calendar;
