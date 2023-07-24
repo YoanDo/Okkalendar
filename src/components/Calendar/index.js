@@ -1,111 +1,97 @@
-"use client"
-
-import React, { useState, useRef, useEffect } from 'react';
-import { DayPilot, DayPilotCalendar, DayPilotNavigator } from "@daypilot/daypilot-lite-react";
-
-import { CalendarWrapper } from './styles';
-
-const styles = {
-  wrap: {
-    display: "flex"
-  },
-  left: {
-    marginRight: "10px"
-  },
-  main: {
-    flexGrow: "1"
-  }
-};
+import React, { useRef, useEffect, useState } from 'react';
+import {
+  DayPilot,
+  DayPilotCalendar,
+  DayPilotNavigator,
+} from '@daypilot/daypilot-lite-react';
+import {
+  CalendarNavigationPanel,
+  CalendarTitle,
+  CalendarWrapper,
+  WeekCalendarWrapper,
+} from './styles';
+import { fakeEvents } from './fixtures';
+import getFormattedDate from '@/helpers/getTodayFormatedDate';
+import formatDate from '@/helpers/formatDate';
 
 const Calendar = () => {
+  const todayDate = getFormattedDate();
   const calendarRef = useRef();
-  const [calendarConfig, setCalendarConfig] = useState({
-    viewType: "Week",
-    durationBarVisible: false,
-    timeRangeSelectedHandling: "Enabled",
-    onTimeRangeSelected: async args => {
-      const dp = calendarRef.current.control;
-      const modal = await DayPilot.Modal.prompt("Create a new event:", "Event 1");
-      dp.clearSelection();
-      if (!modal.result) { return; }
-      dp.events.add({
-        start: args.start,
-        end: args.end,
-        id: DayPilot.guid(),
-        text: modal.result
-      });
-    },
-    eventDeleteHandling: "Update",
-    onEventClick: async args => {
-      const dp = calendarRef.current.control;
-      const modal = await DayPilot.Modal.prompt("Update event text:", args.e.text());
-      if (!modal.result) { return; }
-      const e = args.e;
-      e.data.text = modal.result;
-      dp.events.update(e);
-    },
-  });
 
   useEffect(() => {
-    const events = [
-      {
-        id: 1,
-        text: "Event 1",
-        start: "2023-10-02T10:30:00",
-        end: "2023-10-02T13:00:00"
-      },
-      {
-        id: 2,
-        text: "Event 2",
-        start: "2023-10-03T09:30:00",
-        end: "2023-10-03T11:30:00",
-        backColor: "#6aa84f"
-      },
-      {
-        id: 3,
-        text: "Event 3",
-        start: "2023-10-03T12:00:00",
-        end: "2023-10-03T15:00:00",
-        backColor: "#f1c232"
-      },
-      {
-        id: 4,
-        text: "Event 4",
-        start: "2023-10-01T11:30:00",
-        end: "2023-10-01T14:30:00",
-        backColor: "#cc4125"
-      },
-    ];
+    const startDate = todayDate;
+    const dp = calendarRef.current.control;
+    dp.update({ startDate, events: fakeEvents });
+    // * premium functions to keep in mind
+    // dp.weekStarts = 6;
+    // dp.allowEventOverlap = false;
+  }, [todayDate]);
 
-    const startDate = "2023-10-02";
+  const handleTimeRangeSelected = async (args) => {
+    const dp = calendarRef.current.control;
+    dp.clearSelection();
+    const modal = await DayPilot.Modal.prompt(
+      `Give a name to your new event that starts ${formatDate(
+        args.start.value
+      )} and ends ${formatDate(args.end.value)}`,
+      'Event'
+    );
+    if (!modal.result) {
+      return;
+    }
 
-    calendarRef.current.control.update({startDate, events});
-  }, []);
+    const newEvent = {
+      start: args.start,
+      end: args.end,
+      id: DayPilot.guid(),
+      text: modal.result,
+    };
+
+    // Check for overlapping events
+    const events = dp.events.list;
+    const overlappingEvents = events.filter(
+      (event) => event.start < newEvent.end && event.end > newEvent.start
+    );
+
+    // If there are overlapping events, adjust the new event's start and end times
+    if (overlappingEvents.length > 0) {
+      console.log('overlapping');
+      return;
+    }
+
+    dp.events.add(newEvent);
+  };
 
   return (
-    <CalendarWrapper style={styles.wrap}>
-      <div style={styles.left}>
+    <CalendarWrapper>
+      <CalendarNavigationPanel>
+        <CalendarTitle>Okkalendar</CalendarTitle>
         <DayPilotNavigator
-          selectMode={"Week"}
-          showMonths={3}
-          skipMonths={3}
-          startDate={"2023-10-02"}
-          selectionDay={"2023-10-02"}
-          onTimeRangeSelected={ args => {
+          selectMode="Week"
+          showMonths={1}
+          skipMonths={1}
+          startDate={todayDate}
+          selectionDay={todayDate}
+          onTimeRangeSelected={(args) => {
             calendarRef.current.control.update({
-              startDate: args.day
+              startDate: args.day,
             });
           }}
         />
-      </div>
-      <div style={styles.main}>
+      </CalendarNavigationPanel>
+      <WeekCalendarWrapper>
         <DayPilotCalendar
-          {...calendarConfig}
+          durationBarVisible={false}
+          eventDeleteHandling="Update"
+          events={fakeEvents}
+          onTimeRangeSelected={handleTimeRangeSelected}
           ref={calendarRef}
+          timeRangeSelectedHandling="Enabled"
+          viewType="Week"
         />
-      </div>
+      </WeekCalendarWrapper>
     </CalendarWrapper>
   );
-}
+};
 
 export default Calendar;
