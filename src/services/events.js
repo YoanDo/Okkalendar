@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 export const fetchEvents = () =>
   axios
@@ -12,8 +13,12 @@ export const fetchEvents = () =>
 export const addEvent = (newEvent) =>
   axios
     .post('/api/events', newEvent)
-    .then((response) => response.data)
+    .then(({ data }) => {
+      toast.success('Scheduled 👌');
+      return data;
+    })
     .catch((error) => {
+      toast.error('Something went wrong 🤔');
       console.error('Error adding event:', error);
       return null;
     });
@@ -21,8 +26,12 @@ export const addEvent = (newEvent) =>
 export const deleteEvent = (eventId) =>
   axios
     .delete('/api/events', { data: { id: eventId } })
-    .then((response) => response.data)
+    .then(({ data }) => {
+      toast.success('Removed from your calendar 🗑');
+      return data;
+    })
     .catch((error) => {
+      toast.error('Something went wrong 🤔');
       console.error('Error deleting event:', error);
       return null;
     });

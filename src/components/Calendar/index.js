@@ -1,74 +1,62 @@
 // Todo
 // - modification event
 // - check des 25m
-// - alerts /toast (success & echec)
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import {
   DayPilot,
   DayPilotCalendar,
   DayPilotNavigator,
 } from '@daypilot/daypilot-lite-react';
 import { arrayOf, func, number, oneOfType, shape, string } from 'prop-types';
+import { toast } from 'react-toastify';
 import {
   CalendarNavigationPanel,
   CalendarTitle,
   CalendarWrapper,
   WeekCalendarWrapper,
 } from './styles';
-import getFormattedDate from '@/helpers/getTodayFormatedDate';
-import formatDate from '@/helpers/formatDate';
+import getFormattedDate from '../../helpers/getTodayFormatedDate';
+import formatDate from '../../helpers/formatDate';
 
-const Calendar = ({
-  events = [],
-  onAddEvent = () => {},
-  onDeleteEvent = () => {},
-}) => {
+const Calendar = ({ events, onAddEvent, onDeleteEvent }) => {
   const todayDate = getFormattedDate();
   const calendarRef = useRef();
-
-  useEffect(() => {
-    const startDate = todayDate;
-    const dp = calendarRef.current.control;
-    dp.update({ startDate, events });
-    // * premium functions to keep in mind
-    // dp.weekStarts = 6;
-    // dp.allowEventOverlap = false;
-  }, [todayDate]);
 
   const handleTimeRangeSelected = async (args) => {
     const dp = calendarRef.current.control;
     dp.clearSelection();
+
+    const newEvent = {
+      start: args.start,
+      end: args.end,
+      id: DayPilot.guid(),
+    };
+
+    // Check for conflicting events
+    const existingEvents = dp.events.list;
+    const conflictingEvents = existingEvents.filter(
+      (event) => event.start < newEvent.end && event.end > newEvent.start
+    );
+
+    // If there are conflicting events, show a warning toast
+    if (conflictingEvents.length > 0) {
+      toast.warn("I see you're busy, but your events shouldn't overlap");
+      return;
+    }
+
     const modal = await DayPilot.Modal.prompt(
       `Give a name to your new event that starts ${formatDate(
         args.start.value
       )} and ends ${formatDate(args.end.value)}`,
       'Event'
     );
+
     if (!modal.result) {
       return;
     }
 
-    const newEvent = {
-      start: args.start,
-      end: args.end,
-      id: DayPilot.guid(),
-      text: modal.result,
-    };
-
-    // Check for overlapping events
-    const existingEvents = dp.events.list;
-    const overlappingEvents = existingEvents.filter(
-      (event) => event.start < newEvent.end && event.end > newEvent.start
-    );
-
-    // If there are overlapping events, adjust the new event's start and end times
-    if (overlappingEvents.length > 0) {
-      alert('Event should not overlap');
-      return;
-    }
-
-    // dp.events.add(newEvent);
+    newEvent.text = modal.result;
     onAddEvent(newEvent);
   };
 
@@ -94,12 +82,10 @@ const Calendar = ({
           durationBarVisible={false}
           eventDeleteHandling="Update"
           events={events}
+          onEventDeleted={({ e }) => onDeleteEvent(e.data.id)}
           onTimeRangeSelected={handleTimeRangeSelected}
-          onEventDeleted={({ e }) => {
-            const deletedEventId = e.data.id;
-            onDeleteEvent(deletedEventId);
-          }}
           ref={calendarRef}
+          startDate={todayDate}
           timeRangeSelectedHandling="Enabled"
           viewType="Week"
         />
@@ -117,8 +103,8 @@ Calendar.propTypes = {
       end: string.isRequired,
     })
   ),
-  onAddEvent: func.isRequired,
-  onDeleteEvent: func.isRequired,
+  onAddEvent: func,
+  onDeleteEvent: func,
 };
 
 export default Calendar;

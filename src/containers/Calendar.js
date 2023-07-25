@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { fetchEvents, addEvent, deleteEvent } from '@/services/events';
-import CalendarComponent from '@/components/Calendar';
+import { fetchEvents, addEvent, deleteEvent } from '../services/events';
+import CalendarComponent from '../components/Calendar';
 
 const Calendar = () => {
   const [events, setEvents] = useState([]);
